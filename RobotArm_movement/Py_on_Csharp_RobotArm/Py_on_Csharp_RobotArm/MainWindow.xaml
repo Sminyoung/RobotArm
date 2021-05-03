@@ -1,0 +1,27 @@
+﻿<Window x:Class="Py_on_Csharp_RobotArm.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Py_on_Csharp_RobotArm"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="458" Width="638">
+    <Grid>
+        
+        <Image x:Name="image" 
+               HorizontalAlignment="Left" Height="246" Margin="36,35,0,0" 
+               VerticalAlignment="Top" Width="368"/>
+        
+        <!-- Homing -->
+        <Button x:Name="button" Content="Homing" 
+                HorizontalAlignment="Left" Margin="460,71,0,0" 
+                VerticalAlignment="Top" Width="135" Height="64" Click="Homing_Click"/>
+
+        <!-- Pick -->
+        <Button x:Name="button1" Content="Pick" 
+                HorizontalAlignment="Left" Margin="456,187,0,0" 
+                VerticalAlignment="Top" Width="135" Height="64" Click="Pick_Click"/>
+        
+
+    </Grid>
+</Window>
