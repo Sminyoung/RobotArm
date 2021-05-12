@@ -5,8 +5,8 @@
         xmlns:local="clr-namespace:RobotArmUI"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         Title="Main"
-        Width="1017"
-        Height="643"
+        Width="1109"
+        Height="702"
         mc:Ignorable="d">
 
     <Grid>
@@ -16,15 +16,16 @@
         </Grid.ColumnDefinitions>
 
         <GroupBox Header="RGB" 
-                  HorizontalAlignment="Left" Height="533" 
-                  VerticalAlignment="Top" Width="676" 
+                  HorizontalAlignment="Left" Height="593" 
+                  VerticalAlignment="Top" Width="759" 
                   FontFamily="Consolas" 
                   BorderThickness="2" Margin="10,10,0,0">
 
             <Image x:Name="videoPlayer"
                    MouseLeftButtonDown="videoPlayer_MouseLeftButtonDown"
                    Margin="0,10,-2,10"
-                   MouseEnter="videoPlayer_MouseEnter" MouseLeave="videoPlayer_MouseLeave"/>
+                   MouseEnter="videoPlayer_MouseEnter" 
+                   MouseLeave="videoPlayer_MouseLeave"/>
 
         </GroupBox>
 
@@ -63,19 +64,19 @@
 
         <GroupBox Grid.Column="1" Header="Shape Detection" 
                   HorizontalAlignment="Left" Height="223" 
-                  VerticalAlignment="Top" Width="217" 
+                  VerticalAlignment="Top" Width="260" 
                   FontFamily="Consolas" 
-                  BorderThickness="2" Margin="25,181,0,0">
+                  BorderThickness="2" Margin="25,197,0,0">
             <StackPanel>
 
                 <ToggleButton
                       Width="129"
                       Height="26"
-                      HorizontalAlignment="Left"
+                      HorizontalAlignment="Center"
                       VerticalAlignment="Top"
                       Content="Detect"
                       IsChecked="{Binding ShapeDetection}"
-                      FontFamily="Consolas" Margin="40,25,0,30" />
+                      FontFamily="Consolas" Margin="0,25,0,30" />
 
                 <TextBlock Grid.Column="1"
                        Width="96"
@@ -115,7 +116,7 @@
 
         <GroupBox Grid.Column="1" Header="Position" 
                   HorizontalAlignment="Left" Height="157" 
-                  Margin="25,415,0,0" VerticalAlignment="Top" Width="218" 
+                  Margin="25,446,0,0" VerticalAlignment="Top" Width="260" 
                   FontFamily="Consolas" 
                   BorderThickness="2">
             <StackPanel>
@@ -148,20 +149,32 @@
         </GroupBox>
 
         <Button x:Name="statusBtn" Content="Status" HorizontalAlignment="Left" 
-                Margin="544,0,0,18" VerticalAlignment="Bottom" 
-                Width="142" Height="31" FontFamily="Consolas" Click="statusBtn_Click"/>
+                Margin="39,0,0,18" VerticalAlignment="Bottom" 
+                Width="102" Height="31" FontFamily="Consolas" Click="statusBtn_Click" Grid.Column="1"/>
 
         <GroupBox Grid.Column="1" Header="Depth" 
                   HorizontalAlignment="Left" Height="159" 
                   Margin="25,10,0,0" VerticalAlignment="Top" 
-                  BorderThickness="2" Width="217"
+                  BorderThickness="2" Width="260"
                   FontFamily="Consolas">
 
-            <Image x:Name="depthFrame" Grid.Column="1" 
-                   HorizontalAlignment="Left" Height="134" 
-                   Margin="11,0,0,0" VerticalAlignment="Top" Width="186"/>
+            <Image x:Name="depthFrame" Grid.Column="1" Height="134" 
+                   Margin="0" Width="214"/>
 
         </GroupBox>
+
+        <ToggleButton x:Name="renewalBtn" Content="Renewal" HorizontalAlignment="Left" 
+                      Margin="170,0,0,18" VerticalAlignment="Bottom" 
+                      Width="102" Height="31" FontFamily="Consolas" Grid.Column="1"
+                      IsChecked="{Binding Renewal}"/>
+
+        <Button x:Name="pickBtn" Content="PICK" HorizontalAlignment="Left" 
+            Margin="492,0,0,18" VerticalAlignment="Bottom" 
+            Width="125" Height="31" FontFamily="Consolas" Click="pickBtn_Click"/>
+
+        <Button x:Name="placeBtn" Content="PLACE" HorizontalAlignment="Left" 
+            Margin="644,0,0,18" VerticalAlignment="Bottom" 
+            Width="125" Height="31" FontFamily="Consolas" Click="placeBtn_Click"/>
 
     </Grid>
 </Window>

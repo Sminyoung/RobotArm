@@ -18,13 +18,26 @@ using AForge.Video.DirectShow;
 using Intel.RealSense;
 using System.Windows.Media;
 using System.Threading.Tasks;
-using Python.Runtime;
 using Color = System.Drawing.Color;
 using Pen = System.Drawing.Pen;
 using UI1;
 
+
 namespace RobotArmUI
 {
+    public struct Vector2D
+    {
+        public float X;
+        public float Y;
+    }
+
+    public struct Vector3D
+    {
+        public float X;
+        public float Y;
+        public float Z;
+    }
+
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         public ObservableCollection<FilterInfo> VideoDevices { get; set; }
@@ -34,6 +47,11 @@ namespace RobotArmUI
         private Pipeline pipeline;
         private Colorizer colorizer;
         private CancellationTokenSource tokenSource = new CancellationTokenSource();
+
+        int cTmp = 0, rTmp = 0, tTmp = 0;
+        int cMoving = 0, rMoving = 0, tMoving = 0;
+
+        System.Windows.Point clickPos;
 
         static Action<VideoFrame> UpdateImage(System.Windows.Controls.Image img)
         {
@@ -159,6 +177,14 @@ namespace RobotArmUI
         #endregion
 
 
+        public bool Renewal
+        {
+            get { return _renewal; }
+            set { _renewal = value; this.OnPropertyChanged("Renewal"); }
+        }
+        private bool _renewal;
+
+
         #region 메인
 
         public MainWindow()
@@ -192,21 +218,21 @@ namespace RobotArmUI
 
         #region 마우스 이벤트
 
-        private void videoPlayer_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        public void videoPlayer_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             try
             {
-                System.Windows.Point clickPos = e.GetPosition((IInputElement)sender);
+                clickPos = e.GetPosition((IInputElement)sender);
 
                 clickX = (int)clickPos.X;
                 clickY = (int)clickPos.Y;
 
                 using (var frame = pipeline.WaitForFrames())
                 using (var depth = frame.DepthFrame)
-                    clickZ = ((float)(depth.GetDistance(clickX, clickY) + 0.01) * 100);
+                    clickZ = (float)(depth.GetDistance(clickX, clickY) + 0.01) * 100;
             }
 
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Error");
             }
@@ -277,13 +303,15 @@ namespace RobotArmUI
             g.DrawImage(grayscaledBitmap, new Rectangle(0, 0, tmp.Width, tmp.Height), 0, 0, tmp.Width, tmp.Height, GraphicsUnit.Pixel);
             SimpleShapeChecker shapeChecker = new SimpleShapeChecker();
 
+            List<IntPoint> edgePoints;
+            List<IntPoint> c = null;
+            float radius;
+            AForge.Point center;
+
             for (int i = 0, n = blobs.Length; i < n; i++)
             {
-                List<IntPoint> edgePoints = blobCounter.GetBlobsEdgePoints(blobs[i]);
+                edgePoints = blobCounter.GetBlobsEdgePoints(blobs[i]);
                 int ipenWidth = 5;
-                List<IntPoint> c = null;
-                float radius;
-                AForge.Point center;
 
                 if (shapeChecker.IsQuadrilateral(edgePoints, out c))
                 {
@@ -292,8 +320,11 @@ namespace RobotArmUI
 
                     if (coordinates.Length == 4)
                     {
-                        if(ShapeDetection)
+                        if (ShapeDetection)
+                        {
                             Rectangle += 1;
+                            rTmp = Rectangle;
+                        }
 
                         PaintPolygon(c, bitmap, p);
                     }
@@ -303,8 +334,11 @@ namespace RobotArmUI
                 {
                     Pen p = new Pen(Color.Red, ipenWidth);
 
-                    if(ShapeDetection)
+                    if (ShapeDetection)
+                    {
                         Circle += 1;
+                        cTmp = Circle;
+                    }
 
                     PaintEllipse(bitmap, p, (float)(center.X - radius), (float)(center.Y - radius), (float)(radius * 2), (float)(radius * 2));
                 }
@@ -316,28 +350,109 @@ namespace RobotArmUI
 
                     if (coordinates.Length == 3)
                     {
-                        if(ShapeDetection)
+                        if (ShapeDetection)
+                        {
                             Triangle += 1;
+                            tTmp = Triangle;
+                        }
 
                         PaintPolygon(c, bitmap, p);
                     }
                 }
+
             }
+
+            if (Renewal)
+            {
+                Circle = 0; Rectangle = 0; Triangle = 0;
+                clickX = 0; clickY = 0; clickZ = 0;
+
+                for (int j = 0, k = blobs.Length; j < k; j++)
+                {
+                    edgePoints = blobCounter.GetBlobsEdgePoints(blobs[j]);
+
+                    if (shapeChecker.IsQuadrilateral(edgePoints, out c))
+                    {
+                        System.Drawing.Point[] coordinates = ToPointsArray(c);
+                        if (coordinates.Length == 4)
+                            Rectangle += 1;
+                    }
+
+                    if (shapeChecker.IsTriangle(edgePoints, out c))
+                    {
+                        System.Drawing.Point[] coordinates = ToPointsArray(c);
+                        if (coordinates.Length == 3)
+                            Triangle += 1;
+                    }
+
+                    if (shapeChecker.IsCircle(edgePoints, out center, out radius))
+                        Circle += 1;
+                }
+            }
+
+            Renewal = false;
             ShapeDetection = false;
 
             return bitmap;
         }
 
-        private void PaintPolygon(List<IntPoint>corners, Bitmap bitmap, Pen p)
+        private void PaintPolygon(List<IntPoint> corners, Bitmap bitmap, Pen p)
         {
-                Graphics g = Graphics.FromImage(bitmap);
-                g.DrawPolygon(p, ToPointsArray(corners));
+            Graphics g = Graphics.FromImage(bitmap);
+            g.DrawPolygon(p, ToPointsArray(corners));
         }
 
         private void PaintEllipse(Bitmap bitmap, Pen p, float _x, float _y, float _w, float _h)
         {
             Graphics g = Graphics.FromImage(bitmap);
             g.DrawEllipse(p, _x, _y, _w, _h); ;
+        }
+
+        #endregion
+
+
+        #region 로봇팔 pick & place
+
+        private void pickBtn_Click(object sender, RoutedEventArgs e)
+        {
+            /*
+             좌표값 파이썬 전달 후 물체 집기
+            */
+            Socket_client.Sendsock(clickX + "#" + clickY + "#" + clickZ);
+        }
+
+        private void placeBtn_Click(object sender, RoutedEventArgs e)
+        {
+            // Renewal 후
+            if (cTmp > Circle)
+            {
+                /* Circle Pos */
+
+                //MessageBox.Show("Circle");
+
+                cMoving += 1;
+                cTmp = Circle;
+            }
+
+            else if (rTmp > Rectangle)
+            {
+                /* Rectangle Pos */
+
+                //MessageBox.Show("Rectangle");
+
+                rMoving += 1;
+                rTmp = Rectangle;
+            }
+
+            else if (tTmp > Triangle)
+            {
+                /* Triangle Pos */
+
+                //MessageBox.Show("Triangle");
+
+                tMoving += 1;
+                tTmp = Triangle;
+            }
         }
 
         #endregion
@@ -351,6 +466,7 @@ namespace RobotArmUI
              클릭하면 메시지박스에 로봇팔로 옮겨진 도형의 현황을 출력
             ex) Circle : 1  Rectangle : 2   Triangle : 1
              */
+            MessageBox.Show("Circle : " + cMoving + "    Rectangle : " + rMoving + "   Triangle : " + tMoving);
         }
 
         #endregion
